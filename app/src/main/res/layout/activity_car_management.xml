@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etCarMake"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Car Make" />
+
+    <EditText
+        android:id="@+id/etCarModel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Car Model"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/etCarYear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Car Year"
+        android:layout_marginTop="8dp"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/etCarPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Car Price"
+        android:layout_marginTop="8dp"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/btnAddCar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Car"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnUpdateCar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Update Car"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/btnDeleteCar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Car"
+        android:layout_marginTop="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCars"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
