@@ -28,13 +28,16 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `cars` (
-  `car_id` int(11) NOT NULL,
+  `car_id` int(11) NOT NULL AUTO_INCREMENT,
   `car_type_id` int(11) DEFAULT NULL,
   `license_plate` varchar(20) DEFAULT NULL,
   `make` varchar(50) DEFAULT NULL,
   `model` varchar(50) DEFAULT NULL,
   `year` int(11) DEFAULT NULL,
-  `status` varchar(20) DEFAULT NULL
+  `status` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`car_id`),
+  KEY `car_type_id` (`car_type_id`),
+  CONSTRAINT `cars_ibfk_1` FOREIGN KEY (`car_type_id`) REFERENCES `cartypes` (`car_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -54,9 +57,10 @@ INSERT INTO `cars` (`car_id`, `car_type_id`, `license_plate`, `make`, `model`, `
 --
 
 CREATE TABLE `cartypes` (
-  `car_type_id` int(11) NOT NULL,
+  `car_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `type_name` varchar(50) DEFAULT NULL,
-  `description` text DEFAULT NULL
+  `description` text DEFAULT NULL,
+  PRIMARY KEY (`car_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -76,7 +80,7 @@ INSERT INTO `cartypes` (`car_type_id`, `type_name`, `description`) VALUES
 --
 
 CREATE TABLE `customers` (
-  `customer_id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL AUTO_INCREMENT,
   `first_name` varchar(50) DEFAULT NULL,
   `last_name` varchar(50) DEFAULT NULL,
   `gender` varchar(10) DEFAULT NULL,
@@ -87,7 +91,8 @@ CREATE TABLE `customers` (
   `phone` varchar(20) DEFAULT NULL,
   `user_type` varchar(20) DEFAULT NULL,
   `profile_image` varchar(255) DEFAULT NULL,
-  `driver_license` varchar(20) DEFAULT NULL
+  `driver_license` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -107,11 +112,14 @@ INSERT INTO `customers` (`customer_id`, `first_name`, `last_name`, `gender`, `em
 --
 
 CREATE TABLE `rentalrates` (
-  `rate_id` int(11) NOT NULL,
+  `rate_id` int(11) NOT NULL AUTO_INCREMENT,
   `car_type_id` int(11) DEFAULT NULL,
   `daily_rate` decimal(10,2) DEFAULT NULL,
   `weekly_rate` decimal(10,2) DEFAULT NULL,
-  `monthly_rate` decimal(10,2) DEFAULT NULL
+  `monthly_rate` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`rate_id`),
+  KEY `car_type_id` (`car_type_id`),
+  CONSTRAINT `rentalrates_ibfk_1` FOREIGN KEY (`car_type_id`) REFERENCES `cartypes` (`car_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -131,13 +139,18 @@ INSERT INTO `rentalrates` (`rate_id`, `car_type_id`, `daily_rate`, `weekly_rate`
 --
 
 CREATE TABLE `rentals` (
-  `rental_id` int(11) NOT NULL,
+  `rental_id` int(11) NOT NULL AUTO_INCREMENT,
   `car_id` int(11) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `rental_date` datetime DEFAULT NULL,
   `return_date` datetime DEFAULT NULL,
   `actual_return_date` datetime DEFAULT NULL,
-  `total_cost` decimal(10,2) DEFAULT NULL
+  `total_cost` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`rental_id`),
+  KEY `car_id` (`car_id`),
+  KEY `customer_id` (`customer_id`),
+  CONSTRAINT `rentals_ibfk_1` FOREIGN KEY (`car_id`) REFERENCES `cars` (`car_id`),
+  CONSTRAINT `rentals_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -149,44 +162,6 @@ INSERT INTO `rentals` (`rental_id`, `car_id`, `customer_id`, `rental_date`, `ret
 (2, 2, 2, '2024-06-02 12:00:00', '2024-06-09 12:00:00', NULL, 500.00),
 (3, 3, 3, '2024-06-03 14:00:00', '2024-06-10 14:00:00', '2024-06-10 13:00:00', 700.00),
 (4, 4, 4, '2024-06-04 16:00:00', '2024-06-11 16:00:00', NULL, 400.00);
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `cars`
---
-ALTER TABLE `cars`
-  ADD PRIMARY KEY (`car_id`),
-  ADD KEY `car_type_id` (`car_type_id`);
-
---
--- Indexes for table `cartypes`
---
-ALTER TABLE `cartypes`
-  ADD PRIMARY KEY (`car_type_id`);
-
---
--- Indexes for table `customers`
---
-ALTER TABLE `customers`
-  ADD PRIMARY KEY (`customer_id`);
-
---
--- Indexes for table `rentalrates`
---
-ALTER TABLE `rentalrates`
-  ADD PRIMARY KEY (`rate_id`),
-  ADD KEY `car_type_id` (`car_type_id`);
-
---
--- Indexes for table `rentals`
---
-ALTER TABLE `rentals`
-  ADD PRIMARY KEY (`rental_id`),
-  ADD KEY `car_id` (`car_id`),
-  ADD KEY `customer_id` (`customer_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -222,28 +197,6 @@ ALTER TABLE `rentalrates`
 ALTER TABLE `rentals`
   MODIFY `rental_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `cars`
---
-ALTER TABLE `cars`
-  ADD CONSTRAINT `cars_ibfk_1` FOREIGN KEY (`car_type_id`) REFERENCES `cartypes` (`car_type_id`);
-
---
--- Constraints for table `rentalrates`
---
-ALTER TABLE `rentalrates`
-  ADD CONSTRAINT `rentalrates_ibfk_1` FOREIGN KEY (`car_type_id`) REFERENCES `cartypes` (`car_type_id`);
-
---
--- Constraints for table `rentals`
---
-ALTER TABLE `rentals`
-  ADD CONSTRAINT `rentals_ibfk_1` FOREIGN KEY (`car_id`) REFERENCES `cars` (`car_id`),
-  ADD CONSTRAINT `rentals_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
