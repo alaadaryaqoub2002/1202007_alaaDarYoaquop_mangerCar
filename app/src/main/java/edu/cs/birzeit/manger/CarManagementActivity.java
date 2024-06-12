@@ -1,182 +1,70 @@
 package edu.cs.birzeit.manger;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import android.content.Context;
+import android.util.Log;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+public class CarManagementActivity {
+    private static final String TAG = CarManagementActivity.class.getSimpleName();
+    private RequestQueue requestQueue;
+    private Context context;
 
-public class CarManagementActivity extends AppCompatActivity {
-    private DBHelper dbHelper;
-    private EditText etCarMake, etCarModel, etCarYear, etCarPrice;
-    private Button btnAddCar, btnUpdateCar, btnDeleteCar;
-    private RecyclerView rvCars;
-    private CarAdapter carAdapter;
-    private List<Car> carList;
-    private long selectedCarId = -1;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_car_management);
-
-        dbHelper = new DBHelper(this);
-
-        etCarMake = findViewById(R.id.etCarMake);
-        etCarModel = findViewById(R.id.etCarModel);
-        etCarYear = findViewById(R.id.etCarYear);
-        etCarPrice = findViewById(R.id.etCarPrice);
-        btnAddCar = findViewById(R.id.btnAddCar);
-        btnUpdateCar = findViewById(R.id.btnUpdateCar);
-        btnDeleteCar = findViewById(R.id.btnDeleteCar);
-        rvCars = findViewById(R.id.rvCars);
-
-        carList = new ArrayList<>();
-        carAdapter = new CarAdapter(carList, car -> onCarSelected(car.getId()));
-        rvCars.setLayoutManager(new LinearLayoutManager(this));
-        rvCars.setAdapter(carAdapter);
-
-        btnAddCar.setOnClickListener(v -> addCar());
-        btnUpdateCar.setOnClickListener(v -> updateCar());
-        btnDeleteCar.setOnClickListener(v -> deleteCar());
-
-        loadCars();
+    public CarManagementActivity(Context context) {
+        this.context = context;
+        requestQueue = Volley.newRequestQueue(context);
     }
 
-    private void addCar() {
-        String make = etCarMake.getText().toString();
-        String model = etCarModel.getText().toString();
-        int year = Integer.parseInt(etCarYear.getText().toString());
-        double price = Double.parseDouble(etCarPrice.getText().toString());
+    public void addCar(String make, String model, int year, double price, final VolleyCallback callback) {
+        String url = "http://10.0.2.2/mysql/addCar.php"; // Correct URL to PHP server endpoint
 
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(DBHelper.COLUMN_MAKE, make);
-        values.put(DBHelper.COLUMN_MODEL, model);
-        values.put(DBHelper.COLUMN_YEAR, year);
-        values.put(DBHelper.COLUMN_PRICE, price);
-
-        long newRowId = db.insert(DBHelper.TABLE_CARS, null, values);
-        if (newRowId != -1) {
-            Toast.makeText(this, "Car added", Toast.LENGTH_SHORT).show();
-            loadCars();
-        } else {
-            Toast.makeText(this, "Error adding car", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void updateCar() {
-        if (selectedCarId == -1) {
-            Toast.makeText(this, "Select a car to update", Toast.LENGTH_SHORT).show();
-            return;
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("make", make);
+            jsonObject.put("model", model);
+            jsonObject.put("year", year);
+            jsonObject.put("price", price);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
-        String make = etCarMake.getText().toString();
-        String model = etCarModel.getText().toString();
-        int year = Integer.parseInt(etCarYear.getText().toString());
-        double price = Double.parseDouble(etCarPrice.getText().toString());
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String status = response.getString("status");
+                            String message = response.getString("message");
+                            callback.onSuccess(status, message);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "Error adding car: " + error.getMessage());
+                callback.onFailure(error.getMessage());
+            }
+        });
 
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(DBHelper.COLUMN_MAKE, make);
-        values.put(DBHelper.COLUMN_MODEL, model);
-        values.put(DBHelper.COLUMN_YEAR, year);
-        values.put(DBHelper.COLUMN_PRICE, price);
-
-        int count = db.update(DBHelper.TABLE_CARS, values, DBHelper.COLUMN_ID + " = ?", new String[]{String.valueOf(selectedCarId)});
-        if (count > 0) {
-            Toast.makeText(this, "Car updated", Toast.LENGTH_SHORT).show();
-            loadCars();
-        } else {
-            Toast.makeText(this, "Error updating car", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void deleteCar() {
-        if (selectedCarId == -1) {
-            Toast.makeText(this, "Select a car to delete", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        int count = db.delete(DBHelper.TABLE_CARS, DBHelper.COLUMN_ID + " = ?", new String[]{String.valueOf(selectedCarId)});
-        if (count > 0) {
-            Toast.makeText(this, "Car deleted", Toast.LENGTH_SHORT).show();
-            loadCars();
-        } else {
-            Toast.makeText(this, "Error deleting car", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void loadCars() {
-        carList.clear();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.query(
-                DBHelper.TABLE_CARS,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        while (cursor.moveToNext()) {
-            long id = cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_ID));
-            String make = cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_MAKE));
-            String model = cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_MODEL));
-            int year = cursor.getInt(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_YEAR));
-            double price = cursor.getDouble(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_PRICE));
-
-            Car car = new Car(id, make, model, year, price);
-            carList.add(car);
-        }
-
-        cursor.close();
-        carAdapter.notifyDataSetChanged();
+        requestQueue.add(jsonObjectRequest);
     }
 
 
-    public void onCarClick(int position) {
-        Car clickedCar = carList.get(position);
-        selectedCarId = clickedCar.getId();
-
-        etCarMake.setText(clickedCar.getMake());
-        etCarModel.setText(clickedCar.getModel());
-        etCarYear.setText(String.valueOf(clickedCar.getYear()));
-        etCarPrice.setText(String.valueOf(clickedCar.getPrice()));
+    public interface VolleyCallback {
+        void onSuccess(String status, String message);
+        void onFailure(String errorMessage);
     }
 
-    private void onCarSelected(long carId) {
-        selectedCarId = carId;
 
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.query(
-                DBHelper.TABLE_CARS,
-                null,
-                DBHelper.COLUMN_ID + " = ?",
-                new String[]{String.valueOf(carId)},
-                null,
-                null,
-                null
-        );
 
-        if (cursor != null && cursor.moveToFirst()) {
-            etCarMake.setText(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_MAKE)));
-            etCarModel.setText(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_MODEL)));
-            etCarYear.setText(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_YEAR))));
-            etCarPrice.setText(String.valueOf(cursor.getDouble(cursor.getColumnIndexOrThrow(DBHelper.COLUMN_PRICE))));
-            cursor.close();
-        }
-    }
+
+
 }
-

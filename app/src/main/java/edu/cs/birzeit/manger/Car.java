@@ -31,4 +31,5 @@ public class Car {
     public double getPrice() {
         return price;
     }
+
 }
